@@ -89,6 +89,28 @@ function makeDraggable(container) {
   });
 
   container.addEventListener('dragstart', (e) => e.preventDefault());
+
+  window.addEventListener('resize', () => keepWidgetInBounds(container));
+}
+
+function keepWidgetInBounds(container) {
+  if (!container) return;
+  const rect = container.getBoundingClientRect();
+  const width = rect.width || container.offsetWidth || 150;
+  const height = rect.height || container.offsetHeight || 150;
+
+  if (container.style.left || container.style.top) {
+    const maxLeft = Math.max(0, window.innerWidth - width);
+    const maxTop = Math.max(0, window.innerHeight - height);
+
+    let clampedLeft = Math.max(0, Math.min(rect.left, maxLeft));
+    let clampedTop = Math.max(0, Math.min(rect.top, maxTop));
+
+    container.style.left = `${clampedLeft}px`;
+    container.style.top = `${clampedTop}px`;
+    container.style.right = 'auto';
+    container.style.bottom = 'auto';
+  }
 }
 
 function setState(newState) {
