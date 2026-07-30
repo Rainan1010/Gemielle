@@ -35,3 +35,10 @@
 4. Bấm vào nút **Tải tiện ích đã giải nén (Load unpacked)**.
 5. Chọn thư mục dự án **`Gemielle`**.
 6. Truy cập [Google Gemini](https://gemini.google.com/) và trải nghiệm! 🎉
+
+---
+
+## ⚠️ Miễn trừ trách nhiệm (Disclaimer)
+
+- **Gemielle** là một dự án mã nguồn mở cá nhân được phát triển độc lập và **không liên kết, hợp tác, đại diện hay được tài trợ bởi Google LLC / Google Gemini**.
+- Extension hoạt động hoàn toàn ở phía client (Client-side), chỉ tương tác với DOM giao diện trình duyệt và **không thu thập, lưu trữ hay gửi bất kỳ dữ liệu cá nhân nào** của người dùng.
