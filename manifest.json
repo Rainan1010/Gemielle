@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Gemini AI Assistant Widget",
+  "version": "1.0",
+  "description": "Shows an AI assistant widget on the bottom right corner of Gemini web to indicate AI and User status.",
+  "content_scripts": [
+    {
+      "matches": ["*://gemini.google.com/*"],
+      "css": ["style.css"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*.gif"],
+      "matches": ["*://gemini.google.com/*"]
+    }
+  ]
+}
