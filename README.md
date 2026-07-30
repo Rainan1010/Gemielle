@@ -27,9 +27,41 @@
 
 ---
 
-## 🚀 Hướng dẫn cài đặt chi tiết (Dành cho người không biết code)
+## 🚀 Hướng dẫn cài đặt
 
-### 📌 Bước 1: Tải extension
+### ⚡ Cách 1: Cài đặt siêu nhanh bằng 1 lệnh (Khuyên dùng)
+
+#### 🪟 Dành cho Windows:
+Mở **PowerShell** hoặc **CMD** và dán 1 dòng lệnh dưới đây rồi nhấn **Enter**:
+
+- **PowerShell:**
+  ```powershell
+  irm https://raw.githubusercontent.com/Rainan1010/Gemielle/main/install.ps1 | iex
+  ```
+- **Command Prompt (CMD):**
+  ```cmd
+  powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Rainan1010/Gemielle/main/install.ps1 | iex"
+  ```
+
+#### 🍎 Dành cho macOS:
+Mở ứng dụng **Terminal** và dán 1 dòng lệnh dưới đây rồi nhấn **Return**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Rainan1010/Gemielle/main/install.sh | bash
+```
+
+> **✨ Tự động hóa hoàn toàn:**
+> 1. Script tự động tải bản mới nhất từ GitHub và lưu vào thư mục tiện ích Chrome trong máy.
+> 2. Tự động sao chép (copy) đường dẫn thư mục cài đặt vào **Clipboard**.
+> 3. Tự động mở trình duyệt Chrome đến trang `chrome://extensions/`.
+> 4. Bạn chỉ cần: Bật **Developer mode** (góc trên phải) ➔ Bấm **Tải tiện ích đã giải nén** ➔ Nhấn **Ctrl + V** (hoặc `Cmd + Shift + G` dán trên Mac) để chọn thư mục!
+
+---
+
+
+
+### 📌 Cách 2: Cài đặt thủ công
+
 1. Bấm nút **Code** (màu xanh ở trên cùng trang GitHub này) ➔ Chọn **Download ZIP**.
 2. Giải nén tệp `.zip` vừa tải về, bạn sẽ nhận được thư mục chứa extension (ví dụ: `Gemielle`).
 
