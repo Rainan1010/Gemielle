@@ -27,14 +27,40 @@
 
 ---
 
-## 🚀 Hướng dẫn cài đặt
+## 🚀 Hướng dẫn cài đặt chi tiết (Dành cho người không biết code)
 
-1. **Tải/Clone dự án** về máy tính của bạn.
-2. Mở trình duyệt Google Chrome và truy cập địa chỉ: `chrome://extensions/`
-3. Bật **Chế độ dành cho nhà phát triển (Developer mode)** ở góc trên bên phải.
-4. Bấm vào nút **Tải tiện ích đã giải nén (Load unpacked)**.
-5. Chọn thư mục dự án **`Gemielle`**.
-6. Truy cập [Google Gemini](https://gemini.google.com/) và trải nghiệm! 🎉
+### 📌 Bước 1: Tải extension
+1. Bấm nút **Code** (màu xanh ở trên cùng trang GitHub này) ➔ Chọn **Download ZIP**.
+2. Giải nén tệp `.zip` vừa tải về, bạn sẽ nhận được thư mục chứa extension (ví dụ: `Gemielle`).
+
+### 📌 Bước 2: Lưu trữ thư mục cài đặt
+*(Lưu ý: Lưu thư mục vào đúng vị trí dữ liệu tiện ích của Chrome để tránh vô tình xóa tệp khiến Extension ngưng hoạt động)*
+
+- **Dành cho Windows:**
+  1. Nhấn tổ hợp phím **Windows + R** trên bàn phím để mở hộp thoại **Run**.
+  2. Nhập hoặc dán đường dẫn sau rồi nhấn **Enter**:
+     ```text
+     %LOCALAPPDATA%\Google\Chrome\User Data\Default\Extensions
+     ```
+  3. Cửa sổ thư mục sẽ mở ra. Hãy **chép (copy) thư mục `Gemielle`** vào đây.
+
+- **Dành cho macOS:**
+  1. Mở **Finder**, nhấn tổ hợp phím **Command + Shift + G** (hoặc chọn menu *Go* ➔ *Go to Folder...*).
+  2. Nhập đường dẫn sau rồi nhấn **Return (Enter)**:
+     ```text
+     ~/Library/Application Support/Google/Chrome/Default/Extensions
+     ```
+  3. Cửa sổ thư mục sẽ mở ra. Hãy **chép (copy) thư mục `Gemielle`** vào đây.
+
+### 📌 Bước 3: Thêm vào trình duyệt Chrome
+1. Mở Google Chrome, nhập địa chỉ sau vào thanh tìm kiếm rồi nhấn **Enter**:
+   ```text
+   chrome://extensions/
+   ```
+2. Bật công tắc **Chế độ dành cho nhà phát triển (Developer mode)** ở góc trên bên phải màn hình.
+3. Nhấn vào nút **Tải tiện ích đã giải nén (Load unpacked)** ở góc trên bên trái.
+4. Chọn đến thư mục `Gemielle` bạn vừa lưu ở Bước 2 và bấm **Select / Open**.
+5. Mở [Google Gemini](https://gemini.google.com/) để bắt đầu trải nghiệm trợ lý Gemielle ở góc màn hình! 🎉
 
 ---
 
