@@ -74,15 +74,43 @@ function setupUserTypingDetection() {
   document.body.addEventListener('click', (e) => {
      // If we click a button while user typing, it might be a send.
      // It's hard to precisely identify the send button without specific selectors.
-     // Let's assume if it's a button and we were typing, it might be a send.
      let target = e.target;
      while (target != null && target !== document.body) {
         if (target.tagName === 'BUTTON' || target.getAttribute('role') === 'button') {
-            // Check if there is some input text somewhere.
-            // Simplified: if we were user typing, assume send click.
             if (currentState === STATES.USER_TYPING) {
-                setState(STATES.AI_THINKING);
-                startAITypingDetection();
+                // Instead of assuming any button click is a send, we wait a moment.
+                // If it was a send button, the chat input should be cleared shortly after.
+                // If it was just a model selector or other button, the text will remain.
+                setTimeout(() => {
+                    // Try to find the active editable element
+                    let activeInput = document.querySelector('p[data-placeholder="Enter a prompt here"], div[contenteditable="true"], textarea');
+
+                    let isEmpty = true;
+                    if (activeInput) {
+                        const text = activeInput.textContent || activeInput.value || "";
+                        if (text.trim().length > 0) {
+                            isEmpty = false;
+                        }
+                    } else {
+                        // If we can't find the input, check if we are still in USER_TYPING state
+                        // and assume it might have been sent if we have a way to verify later.
+                        // For now, if we can't find it, we'll cautiously proceed but ideally we find it.
+                        // A more robust way is just checking all contenteditables.
+                        const editables = document.querySelectorAll('div[contenteditable="true"], textarea');
+                        for (let ed of editables) {
+                            const text = ed.textContent || ed.value || "";
+                            if (text.trim().length > 0) {
+                                isEmpty = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isEmpty) {
+                        setState(STATES.AI_THINKING);
+                        startAITypingDetection();
+                    }
+                }, 200); // 200ms delay to allow UI to clear input
             }
             break;
         }
