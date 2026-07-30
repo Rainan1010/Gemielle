@@ -27,6 +27,68 @@ function createWidget() {
 
   container.appendChild(widgetImg);
   document.body.appendChild(container);
+
+  makeDraggable(container);
+}
+
+function makeDraggable(container) {
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+  let initialLeft = 0;
+  let initialTop = 0;
+
+  container.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return; // Chỉ kéo khi bấm chuột trái
+
+    isDragging = true;
+    container.classList.add('dragging');
+
+    const rect = container.getBoundingClientRect();
+    initialLeft = rect.left;
+    initialTop = rect.top;
+
+    container.style.bottom = 'auto';
+    container.style.right = 'auto';
+    container.style.left = `${initialLeft}px`;
+    container.style.top = `${initialTop}px`;
+
+    startX = e.clientX;
+    startY = e.clientY;
+
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    let newLeft = initialLeft + dx;
+    let newTop = initialTop + dy;
+
+    // Giới hạn trong khoảng màn hình
+    const containerWidth = container.offsetWidth || 150;
+    const containerHeight = container.offsetHeight || 150;
+    const maxLeft = window.innerWidth - containerWidth;
+    const maxTop = window.innerHeight - containerHeight;
+
+    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+    newTop = Math.max(0, Math.min(newTop, maxTop));
+
+    container.style.left = `${newLeft}px`;
+    container.style.top = `${newTop}px`;
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      container.classList.remove('dragging');
+    }
+  });
+
+  container.addEventListener('dragstart', (e) => e.preventDefault());
 }
 
 function setState(newState) {
@@ -37,54 +99,52 @@ function setState(newState) {
 
 // Logic to detect User Typing and Send
 function setupUserTypingDetection() {
-  // Gemini uses a contenteditable div or textarea. We will listen to events on the body and delegate.
-  document.body.addEventListener('input', (e) => {
-    // Only care about editable elements
-    if (e.target.isContentEditable || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
-      const text = e.target.textContent || e.target.value;
+  const handleInputChange = (target) => {
+    if (!target) return;
+    if (target.isContentEditable || target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
+      const text = target.textContent || target.value || '';
       if (text.trim().length > 0) {
         if (currentState !== STATES.AI_THINKING && currentState !== STATES.AI_TYPING) {
-             setState(STATES.USER_TYPING);
+          setState(STATES.USER_TYPING);
         }
       } else {
+        // Xóa trắng input -> Trở về WAITING
         if (currentState !== STATES.AI_THINKING && currentState !== STATES.AI_TYPING) {
-             setState(STATES.WAITING);
+          setState(STATES.WAITING);
         }
       }
     }
+  };
+
+  // Listen to input & keyup (backspace/delete) events
+  document.body.addEventListener('input', (e) => handleInputChange(e.target));
+  document.body.addEventListener('keyup', (e) => {
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      handleInputChange(e.target);
+    }
   });
 
-  // Also catch keydown for enter (send)
+  // Catch keydown for Enter (send)
   document.body.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-        // Simple heuristic: if we press enter on an editable element with text, we assume send.
-        if (e.target.isContentEditable || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
-            const text = e.target.textContent || e.target.value;
-            if (text.trim().length > 0) {
-                 // Trigger thinking state
-                 setState(STATES.AI_THINKING);
-                 startAITypingDetection();
-            }
+      if (e.target.isContentEditable || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+        const text = e.target.textContent || e.target.value || '';
+        if (text.trim().length > 0) {
+          setState(STATES.AI_THINKING);
+          startAITypingDetection();
         }
+      }
     }
-  }, true); // use capture
+  }, true);
 
-  // Try to catch click on send buttons.
-  // Gemini might use <button> or something with role="button" or an icon.
+  // Catch click on send buttons
   document.body.addEventListener('click', (e) => {
-     // If we click a button while user typing, it might be a send.
-     // It's hard to precisely identify the send button without specific selectors.
      let target = e.target;
      while (target != null && target !== document.body) {
         if (target.tagName === 'BUTTON' || target.getAttribute('role') === 'button') {
             if (currentState === STATES.USER_TYPING) {
-                // Instead of assuming any button click is a send, we wait a moment.
-                // If it was a send button, the chat input should be cleared shortly after.
-                // If it was just a model selector or other button, the text will remain.
                 setTimeout(() => {
-                    // Try to find the active editable element
                     let activeInput = document.querySelector('p[data-placeholder="Enter a prompt here"], div[contenteditable="true"], textarea');
-
                     let isEmpty = true;
                     if (activeInput) {
                         const text = activeInput.textContent || activeInput.value || "";
@@ -92,10 +152,6 @@ function setupUserTypingDetection() {
                             isEmpty = false;
                         }
                     } else {
-                        // If we can't find the input, check if we are still in USER_TYPING state
-                        // and assume it might have been sent if we have a way to verify later.
-                        // For now, if we can't find it, we'll cautiously proceed but ideally we find it.
-                        // A more robust way is just checking all contenteditables.
                         const editables = document.querySelectorAll('div[contenteditable="true"], textarea');
                         for (let ed of editables) {
                             const text = ed.textContent || ed.value || "";
@@ -110,7 +166,7 @@ function setupUserTypingDetection() {
                         setState(STATES.AI_THINKING);
                         startAITypingDetection();
                     }
-                }, 200); // 200ms delay to allow UI to clear input
+                }, 200);
             }
             break;
         }
@@ -124,56 +180,83 @@ let typingTimeout;
 let aiObserver;
 let checkingAITyping = false;
 
+// Hàm kiểm tra cấu trúc DOM: chỉ trả về true khi thực sự có chữ được sinh ra trong khối trả lời (message-content/.markdown)
+function isActualAnswerTextMutation(mutation) {
+  let targetEl = null;
+
+  if (mutation.type === 'characterData') {
+    targetEl = mutation.target.parentElement;
+  } else if (mutation.type === 'childList') {
+    for (let node of mutation.addedNodes) {
+      let el = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+      if (el) {
+        targetEl = el;
+        break;
+      }
+    }
+  }
+
+  if (!targetEl) return false;
+
+  // 1. Phải NẰM TRONG container chứa nội dung câu trả lời thật sự (message-content hoặc .markdown)
+  const isInsideAnswerContainer = targetEl.closest('message-content, .message-content, .markdown, model-response .markdown');
+  if (!isInsideAnswerContainer) return false;
+
+  // 2. Phải KHÔNG NẰM TRONG khối suy nghĩ (Thought Viewer) hay khối tìm kiếm web (Grounding)
+  const isInsideThinkingOrSearch = targetEl.closest('gdm-thought-viewer, thought-viewer, .thought-container, gdm-grounding-drawer, grounding-chips, .grounding-container, search-entry-point');
+  if (isInsideThinkingOrSearch) return false;
+
+  // 3. Phải chứa chữ thực sự
+  const text = (targetEl.textContent || '').trim();
+  return text.length > 0;
+}
+
 function startAITypingDetection() {
     if (checkingAITyping) return;
     checkingAITyping = true;
 
-    // We observe DOM changes. If DOM changes significantly (new elements added), it might be AI typing.
+    const targetContainer = document.querySelector('main') || document.querySelector('[role="main"]') || document.body;
+
     aiObserver = new MutationObserver((mutations) => {
-        let significantChange = false;
+        let hasTextGeneration = false;
+
         for (let mutation of mutations) {
-            // Gemini streams text. It usually adds text nodes or small elements.
-            if (mutation.type === 'childList' || mutation.type === 'characterData') {
-                significantChange = true;
+            if (isActualAnswerTextMutation(mutation)) {
+                hasTextGeneration = true;
                 break;
             }
         }
 
-        if (significantChange) {
+        if (hasTextGeneration) {
             if (currentState === STATES.AI_THINKING) {
                 setState(STATES.AI_TYPING);
             }
 
             if (currentState === STATES.AI_TYPING) {
-                // reset timeout
                 clearTimeout(typingTimeout);
                 typingTimeout = setTimeout(() => {
-                    // No more DOM changes for a while, assume complete.
                     setState(STATES.AI_COMPLETE);
                     stopAITypingDetection();
-                }, 2000); // 2 seconds of no DOM change means complete
+                }, 800);
             }
         }
     });
 
-    // Observe body for changes.
-    // It's a bit heavy, but without knowing the exact container, it's a generic way.
-    aiObserver.observe(document.body, { childList: true, characterData: true, subtree: true });
+    aiObserver.observe(targetContainer, { childList: true, characterData: true, subtree: true });
 
-    // Set a fallback timeout in case DOM doesn't change after "Thinking" (e.g. error, or fast response)
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
          if (currentState === STATES.AI_THINKING) {
-             // Maybe it didn't type, just finished? Or failed. Let's just go back to waiting.
              setState(STATES.WAITING);
              stopAITypingDetection();
          }
-    }, 15000); // 15 seconds max for thinking
+    }, 60000);
 }
 
 function stopAITypingDetection() {
     if (aiObserver) {
         aiObserver.disconnect();
+        aiObserver = null;
     }
     checkingAITyping = false;
 }
@@ -181,6 +264,7 @@ function stopAITypingDetection() {
 // Initialize
 createWidget();
 setupUserTypingDetection();
+
 
 // Let's add an extra safety check. Sometimes we might miss the end of generation.
 // Polling for UI states might be needed, but mutation observer with timeout is decent.

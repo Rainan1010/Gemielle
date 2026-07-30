@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Gemini AI Assistant Widget",
+  "name": "Gemielle",
   "version": "1.0",
   "description": "Shows an AI assistant widget on the bottom right corner of Gemini web to indicate AI and User status.",
   "content_scripts": [
