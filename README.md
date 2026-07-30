@@ -2,6 +2,8 @@
 
 **Gemielle** là một Chrome Extension giúp hiển thị một "trợ lý AI" sinh động ở góc màn hình khi bạn sử dụng Google Gemini Web (`gemini.google.com`). Trợ lý sẽ tự động biểu cảm và chuyển đổi trạng thái theo thời gian thực tương ứng với hành vi của bạn và AI.
 
+> 💡 **Phiên bản dành cho Claude và ChatGPT:** [Remielle-Widget](https://github.com/Tqan-Nguyen/Remielle-Widget)
+
 ---
 
 ## ✨ Tính năng nổi bật

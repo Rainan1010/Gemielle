@@ -179,8 +179,16 @@ function setupUserTypingDetection() {
 let typingTimeout;
 let aiObserver;
 let checkingAITyping = false;
+let existingResponseElements = new Set();
 
-// Hàm kiểm tra cấu trúc DOM: chỉ trả về true khi thực sự có chữ được sinh ra trong khối trả lời (message-content/.markdown)
+// Lưu danh sách các khối câu trả lời đã tồn tại trong DOM trước khi prompt mới được gửi
+function captureExistingResponses() {
+  existingResponseElements.clear();
+  const elements = document.querySelectorAll('model-response, .model-response, [data-test-id="model-response"], message-content, .message-content');
+  elements.forEach((el) => existingResponseElements.add(el));
+}
+
+// Hàm kiểm tra cấu trúc DOM: chỉ trả về true khi thực sự có chữ được sinh ra trong khối trả lời MỚI (message-content/.markdown)
 function isActualAnswerTextMutation(mutation) {
   let targetEl = null;
 
@@ -198,20 +206,28 @@ function isActualAnswerTextMutation(mutation) {
 
   if (!targetEl) return false;
 
-  // 1. Phải NẰM TRONG container chứa nội dung câu trả lời thật sự (message-content hoặc .markdown)
+  // 1. Kiểm tra xem targetEl có thuộc về các khối trả lời ĐÃ TỒN TẠI TỪ TRƯỚC hay không
+  for (let oldEl of existingResponseElements) {
+    if (oldEl.contains(targetEl)) {
+      return false; // Bỏ qua tất cả thay đổi thuộc các câu trả lời cũ
+    }
+  }
+
+  // 2. Phải NẰM TRONG container chứa nội dung câu trả lời thật sự (message-content hoặc .markdown)
   const isInsideAnswerContainer = targetEl.closest('message-content, .message-content, .markdown, model-response .markdown');
   if (!isInsideAnswerContainer) return false;
 
-  // 2. Phải KHÔNG NẰM TRONG khối suy nghĩ (Thought Viewer) hay khối tìm kiếm web (Grounding)
+  // 3. Phải KHÔNG NẰM TRONG khối suy nghĩ (Thought Viewer) hay khối tìm kiếm web (Grounding)
   const isInsideThinkingOrSearch = targetEl.closest('gdm-thought-viewer, thought-viewer, .thought-container, gdm-grounding-drawer, grounding-chips, .grounding-container, search-entry-point');
   if (isInsideThinkingOrSearch) return false;
 
-  // 3. Phải chứa chữ thực sự
+  // 4. Phải chứa chữ thực sự
   const text = (targetEl.textContent || '').trim();
   return text.length > 0;
 }
 
 function startAITypingDetection() {
+    captureExistingResponses();
     if (checkingAITyping) return;
     checkingAITyping = true;
 
@@ -237,7 +253,7 @@ function startAITypingDetection() {
                 typingTimeout = setTimeout(() => {
                     setState(STATES.AI_COMPLETE);
                     stopAITypingDetection();
-                }, 800);
+                }, 1200);
             }
         }
     });
