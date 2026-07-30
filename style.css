@@ -1,0 +1,18 @@
+/* Base styles for the virtual assistant overlay */
+#remielle-assistant-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 200px; /* Adjust based on preferred size */
+  height: auto;
+  z-index: 999999;
+  pointer-events: none; /* Let clicks pass through */
+  transition: opacity 0.3s ease-in-out;
+}
+
+#remielle-assistant-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
