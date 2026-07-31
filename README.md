@@ -98,6 +98,30 @@ curl -fsSL https://raw.githubusercontent.com/Rainan1010/Gemielle/main/install.sh
 
 ---
 
+## 🗑️ Hướng dẫn gỡ cài đặt (Uninstall)
+
+Nếu muốn gỡ bỏ Gemielle khỏi máy, bạn chỉ cần mở Terminal/PowerShell và dán 1 dòng lệnh dưới đây:
+
+### 🪟 Dành cho Windows:
+- **PowerShell:**
+  ```powershell
+  irm https://raw.githubusercontent.com/Rainan1010/Gemielle/main/uninstall.ps1 | iex
+  ```
+- **Command Prompt (CMD):**
+  ```cmd
+  powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Rainan1010/Gemielle/main/uninstall.ps1 | iex"
+  ```
+
+### 🍎 Dành cho macOS:
+- **Terminal:**
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/Rainan1010/Gemielle/main/uninstall.sh | bash
+  ```
+
+> **Lưu ý:** Script sẽ tự động xóa thư mục Extension trên máy và mở trang `chrome://extensions/` để bạn bấm nút **Xóa (Remove)** Gemielle khỏi Chrome.
+
+---
+
 ## ⚠️ Miễn trừ trách nhiệm (Disclaimer)
 
 - **Gemielle** là một dự án mã nguồn mở cá nhân được phát triển độc lập và **không liên kết, hợp tác, đại diện hay được tài trợ bởi Google LLC / Google Gemini**.
