@@ -8,6 +8,9 @@
   let checkingAITyping = false;
   let existingResponseElements = new Set();
 
+  const THINKING_SELECTORS =
+    'gdm-thought-viewer, thought-viewer, gdm-thought-process, thought-process, gdm-reasoning-viewer, reasoning-viewer, .thought-container, .thought-viewer, .thought-process, .thought-header, .thought-chunk, .thinking-container, .thinking-process, .thinking-header, .thinking-chunk, .reasoning-container, .reasoning-process, .reasoning-header, [data-test-id="thought-container"], [data-test-id="thought-viewer"], [data-test-id="thinking-container"], gdm-grounding-drawer, grounding-chips, .grounding-container, search-entry-point, details, summary, mat-expansion-panel, .mat-expansion-panel';
+
   function captureExistingResponses() {
     existingResponseElements.clear();
     const elements = document.querySelectorAll(
@@ -33,33 +36,40 @@
 
     if (!targetEl) return false;
 
-    // 1. Kiểm tra xem targetEl có thuộc về các khối trả lời ĐÃ TỒN TẠI TỪ TRƯỚC hay không
+    // 1. Phải NẰM TRONG khối câu trả lời của AI (<model-response>)
+    const modelResponse = targetEl.closest(
+      'model-response, .model-response, [data-test-id="model-response"]'
+    );
+    if (!modelResponse) return false;
+
+    // Tuyệt đối KHÔNG ĐƯỢC nằm trong câu hỏi người dùng
+    if (targetEl.closest('user-query, .user-query, [data-test-id="user-query"], [class*="user-query"]')) {
+      return false;
+    }
+
+    // 2. Kiểm tra xem modelResponse có thuộc về các khối trả lời ĐÃ TỒN TẠI TỪ TRƯỚC hay không
+    if (existingResponseElements.has(modelResponse)) {
+      return false;
+    }
     for (let oldEl of existingResponseElements) {
       if (oldEl.contains(targetEl)) {
         return false;
       }
     }
 
-    // 2. Phải NẰM TRONG container chứa nội dung câu trả lời thật sự (message-content hoặc .markdown)
-    const answerContainer = targetEl.closest(
-      'message-content, .message-content, .markdown'
-    );
+    // 3. Phải KHÔNG NẰM TRONG khối suy nghĩ (Thought Viewer)
+    if (targetEl.closest(THINKING_SELECTORS)) {
+      return false;
+    }
+
+    // 4. Phải NẰM TRONG container nội dung câu trả lời (message-content hoặc .markdown)
+    const answerContainer = targetEl.closest('message-content, .message-content, .markdown');
     if (!answerContainer) return false;
 
-    // 3. Phải KHÔNG NẰM TRONG khối suy nghĩ (Thought Viewer) hay khối tìm kiếm web (Grounding)
-    const isInsideThinkingOrSearch = answerContainer.closest(
-      'gdm-thought-viewer, thought-viewer, .thought-container, gdm-grounding-drawer, grounding-chips, .grounding-container, search-entry-point'
-    ) || targetEl.closest(
-      'gdm-thought-viewer, thought-viewer, .thought-container, gdm-grounding-drawer, grounding-chips, .grounding-container, search-entry-point'
-    );
-    if (isInsideThinkingOrSearch) return false;
-
-    // 4. Phải chứa chữ thật sự (loại trừ khối suy nghĩ) HOẶC chứa thẻ hình ảnh (tạo ảnh AI)
+    // 5. Phải chứa chữ thật sự (loại trừ khối suy nghĩ) HOẶC chứa thẻ hình ảnh
     let checkEl = targetEl.cloneNode(true);
     if (checkEl.querySelectorAll) {
-      const thinkingNodes = checkEl.querySelectorAll(
-        'gdm-thought-viewer, thought-viewer, .thought-container, gdm-grounding-drawer, grounding-chips, .grounding-container, search-entry-point'
-      );
+      const thinkingNodes = checkEl.querySelectorAll(THINKING_SELECTORS);
       thinkingNodes.forEach((node) => node.remove());
     }
     const text = (checkEl.textContent || '').trim();
@@ -96,9 +106,14 @@
     }
     if (!targetEl) return false;
 
+    const modelResponse = targetEl.closest('model-response, .model-response, [data-test-id="model-response"]');
+    if (!modelResponse) return false;
+
     for (let oldEl of existingResponseElements) {
       if (oldEl.contains(targetEl)) return false;
     }
+
+    if (targetEl.closest(THINKING_SELECTORS)) return false;
 
     const isImgCard = !!(
       ['IMG', 'PICTURE', 'CANVAS', 'GDM-IMAGE-CARD', 'GDM-IMAGE-GENERATION'].includes(targetEl.tagName) ||
@@ -117,20 +132,12 @@
       return true;
     }
 
-    const isInsideModelResponse = targetEl.closest('model-response, .model-response');
-    const isInsideThinking = targetEl.closest(
-      'gdm-thought-viewer, thought-viewer, .thought-container, gdm-grounding-drawer, grounding-chips, .grounding-container, search-entry-point'
-    );
-    if (isInsideModelResponse && !isInsideThinking) {
-      return true;
-    }
-
     return false;
   }
 
   // Kiểm tra xem response MỚI NHẤT đã thực sự có nội dung hoàn chỉnh chưa
   function isLatestResponseComplete() {
-    const allResponses = document.querySelectorAll('model-response');
+    const allResponses = document.querySelectorAll('model-response, .model-response, [data-test-id="model-response"]');
     let latestNew = null;
     for (let i = allResponses.length - 1; i >= 0; i--) {
       if (!existingResponseElements.has(allResponses[i])) {
@@ -146,13 +153,38 @@
       if (img.complete && img.naturalWidth > 0) return true;
     }
 
-    // 2. Kiểm tra có khối markdown chứa text thật (>10 ký tự, loại trừ status text)
-    const markdowns = latestNew.querySelectorAll('.markdown, message-content');
+    // 2. Kiểm tra có khối markdown chứa text thật (>10 ký tự, loại trừ status text suy nghĩ)
+    const markdowns = latestNew.querySelectorAll('.markdown, [class*="markdown"]');
     for (const md of markdowns) {
-      const text = (md.textContent || '').trim();
+      if (md.closest(THINKING_SELECTORS)) continue;
+      let checkEl = md.cloneNode(true);
+      if (checkEl.querySelectorAll) {
+        const thinkingNodes = checkEl.querySelectorAll(THINKING_SELECTORS);
+        thinkingNodes.forEach((node) => node.remove());
+      }
+      const text = (checkEl.textContent || '').trim();
       if (text.length > 10) return true;
     }
 
+    return false;
+  }
+
+  function getLatestNewResponse() {
+    const allResponses = document.querySelectorAll('model-response, .model-response, [data-test-id="model-response"]');
+    for (let i = allResponses.length - 1; i >= 0; i--) {
+      if (!existingResponseElements.has(allResponses[i])) {
+        return allResponses[i];
+      }
+    }
+    return null;
+  }
+
+  function hasCompletedImage(container) {
+    if (!container) return false;
+    const images = container.querySelectorAll('img[src]');
+    for (const img of images) {
+      if (img.complete && img.naturalWidth > 0) return true;
+    }
     return false;
   }
 
@@ -173,6 +205,11 @@
       let hasImageGeneration = false;
 
       for (let mutation of mutations) {
+        let targetEl = mutation.target.parentElement || mutation.target;
+        if (targetEl && targetEl.closest && targetEl.closest('model-response, .model-response, [data-test-id="model-response"]')) {
+          lastMutationTime = Date.now();
+        }
+
         if (isImageGenerationMutation(mutation)) {
           hasImageGeneration = true;
         }
@@ -210,8 +247,18 @@
       // Chỉ xét hoàn thành nếu DOM đã ngừng thay đổi >= 800ms
       if (timeSinceLastMutation < 800) return;
 
-      // XÁC NHẬN response mới nhất đã có nội dung thật sự (ảnh loaded hoặc text markdown)
-      if (isLatestResponseComplete()) {
+      // Nếu đang ở trạng thái AI_THINKING, chỉ complete nếu đã có ảnh tạo xong
+      if (state === STATES.AI_THINKING) {
+        const latestNew = getLatestNewResponse();
+        if (latestNew && hasCompletedImage(latestNew)) {
+          setState(STATES.AI_COMPLETE);
+          stopAITypingDetection();
+        }
+        return;
+      }
+
+      // Đã ở trạng thái AI_TYPING và câu trả lời đã hoàn chỉnh
+      if (state === STATES.AI_TYPING && isLatestResponseComplete()) {
         setState(STATES.AI_COMPLETE);
         stopAITypingDetection();
       }
